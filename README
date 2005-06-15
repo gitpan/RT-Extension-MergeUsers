@@ -1,60 +1,12 @@
+This RT extension adds a "Merge Users" box to the User Administration page, 
+which allows you to merge the user you are currently viewing with another
+user on your RT instance.  It also adds MergeInto() and Unmerge() functions to 
+the RT::User class, which allow you to programmatically accomplish the same
+thing from your scrips.  It also provides a version of CanonicalizeEmailAddress,
+which means that all e-mail sent from secondary users is displayed as coming
+from the primary user.
 
-||User Correlation
-||
-||   Background: We have a large, diverse user community at HMS and its
-||   affiliated institutions. Users often have multiple e-mail addresses
-||   either at different institutions or departments within institutions
-||   that do not use centralized services. Our systems of record do not
-||   always reflect the address the user considers primary, and users may
-||   use different e-mail addresses at different times, even within a
-||   single support incident. For example, a user may send mail from their
-||   work computer as firstname@hms.harvard.edu, but when they use Outlook
-||   Web Access at home, they send mail as
-||   firstname_lastname@hms.harvard.edu.
-||
-||   Since RT uses the e-mail address as the primary identifier for a user,
-||   we need some way to correlate different e-mail addresses as belonging
-||   to a single individual. For example, we would like internal staff to
-||   be able to easily search for all tickets from a given user, and would
-||   also like to make sure that the Self Service interface to RT includes
-||   all of a user's tickets.
-||
-||   We will work with maintainers of local systems of record and e-mail
-||   infrastructure to develop a mechanism to rationalize e-mail addresses
-||   to our centralized eCommons credential. (eCommons is the HMS intranet
-||   and it uses our Active Directory domain's credentials; these
-||   credentials are most often referred to as "eCommons IDs".)
-||
-||   Proposed work: We have considered several options that would address
-||   our needs. We realize that this would be a generally useful solution,
-||   so we are interested in funding development of a feature or behavior
-||   change that would become part of the stock RT code. We believe one or
-||   a combination of the following options might be viable:
-||
-||     * A "merge user" feature. Similar to the "merge ticket" feature,
-||       this would allow an internal RT user to manually indicate that two
-||       users are the same individual. It would be critical to have some
-||       way of undoing this, either through "unmerging" or deleting an
-||       e-mail address from a given user, in case a mistake is made. This
-||       seems like it would only be useful if a user could have multiple
-||       associated e-mail addresses.
-||
-||     * A "link user" feature. Multiple users could somehow be "linked" so
-||       that RT recognized them as one individual for notification and
-||       access control purposes.
-||
-||   There may be other options -- we'd be interested in a proposal for a
-||   specific solution.
+To install:
 
-Adding multiple email addresses for one user seems to be the most sane way
-to do this.  Each user would have a primary address and some number of secondary addresses.
-
-If you actually have a way to turn any given address into a single, canonicalized address for a specific user, we can make RT do this resolution on the fly when a user logs in or attempts to create a ticket. 
-
-User corellation
-
-    ecommons id (active directory)
-
-    new tool to merge users based on lookup in webservice
-    new tool to one-off merge users
-
+    perl Makefile.PL
+    make install

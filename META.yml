@@ -1,5 +1,5 @@
 name: RT-Extension-MergeUsers
-version: 0.01
+version: 0.02
 abstract: Merges two users into the same effective user
 author: Alex Vandiver <alexmv@bestpractical.com>
 license: GPL version 2
