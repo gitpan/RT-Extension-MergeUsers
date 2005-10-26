@@ -8,4 +8,4 @@ no_index:
   directory:
     - html
     - inc
-generated_by: Module::Install version 0.36
+generated_by: Module::Install version 0.37
