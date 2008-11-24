@@ -8,4 +8,6 @@ author          ('Alex Vandiver <alexmv@bestpractical.com>');
 version_from    ('lib/RT/Extension/MergeUsers.pm');
 license         ('GPL version 2');
 
-&WriteAll;
+requires        ('Hook::LexWrap');
+
+WriteAll();
