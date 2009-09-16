@@ -48,7 +48,7 @@ use warnings; no warnings qw(redefine);
 
 package RT::Extension::MergeUsers;
 
-our $VERSION = '0.03_02';
+our $VERSION = '0.03';
 
 package RT::User;
 
@@ -58,7 +58,7 @@ use RT::Interface::Web::Handler;
 use Hook::LexWrap;
 
 { my $i = 0;
-wrap 'RT::Interface::Web::Handler::CleanupRequest' => sub {
+wrap 'RT::Interface::Web::Handler::CleanupRequest', post => sub {
     return if ++$i%100; # flush cache every N requests
     %EFFECTIVE_ID_CACHE = ();
 }; }
