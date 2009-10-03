@@ -48,7 +48,7 @@ use warnings; no warnings qw(redefine);
 
 package RT::Extension::MergeUsers;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04_01';
 
 package RT::User;
 
@@ -190,11 +190,11 @@ sub MergeInto {
     $merged_users->SetContent( [$canonical_self->Id, @{$merged_users->Content}] );
 
     $canonical_self->SetComments( join "\n", grep /\S/,
-        $canonical_self->Comments,
+        $canonical_self->Comments||'',
         "Merged into ". $merge->EmailAddress ." (". $merge->id .")",
     );
     $merge->SetComments(join "\n", grep /\S/,
-        $merge->Comments,
+        $merge->Comments||'',
         $canonical_self->EmailAddress." (".$canonical_self->id.") merged into this user",
     );
     return (1, "Merged users successfuly");
@@ -206,12 +206,16 @@ sub UnMerge {
     my ($current) = $self->Attributes->Named("EffectiveId");
     return (0, "Not a merged user") unless $current;
 
+    # flush the cache, or the Sets below will
+    # clobber $self
+    delete $EFFECTIVE_ID_CACHE{$self->Id};
+
     my $merge = RT::User->new($RT::SystemUser);
     $merge->Load( $current->Content );
 
     $current->Delete;
     $self->SetComments( join "\n", grep /\S/,
-        $self->Comments,
+        $self->Comments||'',
         "Unmerged from ". $merge->EmailAddress ." (".$merge->id.")",
     );
 
@@ -219,6 +223,7 @@ sub UnMerge {
         $merge->Comments,
         $self->EmailAddress ." (". $self->id .") unmerged from this user",
     );
+
     my $merged_users = $merge->GetMergedUsers;
     my @remaining_users = grep { $_ != $self->Id } @{$merged_users->Content};
     if (@remaining_users) {
@@ -227,7 +232,7 @@ sub UnMerge {
         $merged_users->Delete;
     }
 
-    return ($merge->id, "Unmerged from @{[$merge->EmailAddress]}");
+    return ($merge->id, "Unmerged @{[$self->NameAndEmail]} from @{[$merge->NameAndEmail]}");
 }
 
 sub SetEmailAddress {
@@ -247,6 +252,18 @@ sub SetEmailAddress {
     }
 
     return $self->_Set( Field => 'EmailAddress', Value => $value );
+}
+
+sub NameAndEmail {
+    my $self = shift;
+    my $name = $self->Name;
+    my $email = $self->EmailAddress;
+
+    if ($name eq $email) {
+        return $email;
+    } else {
+        return "$name <$email>";
+    }
 }
 
 package RT::Users;
