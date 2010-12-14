@@ -43,12 +43,59 @@
 # those contributions and any derivatives thereof.
 # 
 # END BPS TAGGED BLOCK }}}
+use 5.008003;
 use strict;
 use warnings; no warnings qw(redefine);
 
 package RT::Extension::MergeUsers;
 
-our $VERSION = '0.04_01';
+our $VERSION = '0.04';
+
+=head1 NAME
+
+RT::Extension::MergeUsers - Merges two users into the same effective user
+
+=head1 DESCRIPTION
+
+This RT extension adds a "Merge Users" box to the User Administration page, 
+which allows you to merge the user you are currently viewing with another
+user on your RT instance.
+
+It also adds L</MergeInto> and L</UnMerge> functions to the L<RT::User> class,
+which allow you to programmatically accomplish the same thing from your code.
+
+It also provides a version of L<CanonicalizeEmailAddress>, which means that
+all e-mail sent from secondary users is displayed as coming from the primary
+user.
+
+=head1 INSTALLATION
+
+If you're upgrading then, as well, read L</UPGRADING> below.
+
+    perl Makefile.PL
+    make
+    make install
+    clear your mason cache
+        most often this would be rm -rf /opt/rt3/var/mason_data/*
+    restart apache
+
+For RT 3.8
+
+    Add RT::Extension::MergeUsers to your /opt/rt3/etc/RT_SiteConfig.pm file
+    Set(@Plugins, qw(RT::Extension::MergeUsers));
+
+    If you have more than one Plugin enabled, you must enable them as one 
+    Set(@Plugins, qw(Foo Bar)); command
+
+=head1 UPGRADING
+
+If you are upgrading from 0.03_01 or earlier, you must run F<rt-upgrade-merged-users>.
+This script will create MergedUsers Attributes so RT can know when you're looking
+at a user that other users have been merged into. If you don't run this script,
+you'll have issues unmerging users. It can be safely run multiple times, it will
+only create Attributes as needed.
+
+=cut
 
 package RT::User;
 
@@ -179,6 +226,9 @@ sub MergeInto {
     return (0, "User @{[$canonical_self->Name]} has already been merged")
            if defined $new and $new->Content == $canonical_self->id;
 
+    # clean the cache
+    delete $EFFECTIVE_ID_CACHE{$self->id};
+
     # do the merge
     $canonical_self->SetAttribute(
         Name => "EffectiveId",
@@ -208,7 +258,7 @@ sub UnMerge {
 
     # flush the cache, or the Sets below will
     # clobber $self
-    delete $EFFECTIVE_ID_CACHE{$self->Id};
+    delete $EFFECTIVE_ID_CACHE{$self->id};
 
     my $merge = RT::User->new($RT::SystemUser);
     $merge->Load( $current->Content );
@@ -268,7 +318,7 @@ sub NameAndEmail {
 
 package RT::Users;
 use RT::Users;
-        
+
 =head2 Next
 
 This custom iterator makes sure that duplicate users are never shown in search results.
@@ -296,5 +346,15 @@ sub Next {
     return $user;
 
 }
+
+=head1 AUTHOR
+
+Alex Vandiver E<lt>alexmv@bestpractical.comE<gt>
+
+=head1 LICENSE
+
+GPL version 2.
+
+=cut
 
 1;
