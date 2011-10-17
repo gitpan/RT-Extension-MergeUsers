@@ -49,7 +49,7 @@ use warnings; no warnings qw(redefine);
 
 package RT::Extension::MergeUsers;
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 =head1 NAME
 
@@ -329,8 +329,7 @@ sub Next {
     my $self = shift;
     
     my $user = $self->SUPER::Next(@_);
-    return unless ($user && $user->id);
-    unless ($user) {
+    unless ($user and $user->id) {
         $self->{seen_users} = undef;
         return undef;
     }   
