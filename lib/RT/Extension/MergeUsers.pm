@@ -49,7 +49,7 @@ use warnings; no warnings qw(redefine);
 
 package RT::Extension::MergeUsers;
 
-our $VERSION = '0.08';
+our $VERSION = '0.09';
 
 =head1 NAME
 
@@ -102,13 +102,18 @@ package RT::User;
 our %EFFECTIVE_ID_CACHE;
 
 use RT::Interface::Web::Handler;
-use Hook::LexWrap;
 
-{ my $i = 0;
-wrap 'RT::Interface::Web::Handler::CleanupRequest', post => sub {
-    return if ++$i%100; # flush cache every N requests
-    %EFFECTIVE_ID_CACHE = ();
-}; }
+{
+    my $i = 0;
+
+    my $old_cleanup = \&RT::Interface::Web::Handler::CleanupRequest;
+    no warnings 'redefine';
+    *RT::Interface::Web::Handler::CleanupRequest = sub {
+        $old_cleanup->(@_);
+        return if ++$i % 100; # flush cache every N requests
+        %EFFECTIVE_ID_CACHE = ();
+    };
+}
 
 sub CanonicalizeEmailAddress {
     my $self = shift;
@@ -122,15 +127,7 @@ sub CanonicalizeEmailAddress {
     my $canonical_user = RT::User->new($RT::SystemUser);
     $canonical_user->LoadByCols( EmailAddress => $address );
     return $address unless $canonical_user->id;
-
-    # if we got a user, check for a parent
-    my ($effective_id) = $canonical_user->Attributes->Named("EffectiveId");
-    return $address unless $effective_id && $effective_id->id;
-
-    $canonical_user->LoadByCols( id => $effective_id->Content );
-    return $address unless $canonical_user->id;
-
-    # is there another parent user above this one?
+    return $address unless $canonical_user->EmailAddress ne $address;
     return $canonical_user->CanonicalizeEmailAddress(
         $canonical_user->EmailAddress
     );
@@ -145,7 +142,7 @@ sub LoadByCols {
         my $effective_id = RT::Attribute->new( $RT::SystemUser );
         $effective_id->LoadByCols(
             Name       => 'EffectiveId',
-            ObjectType => ref($self) || $self,
+            ObjectType => __PACKAGE__,
             ObjectId   => $oid,
         );
         if ( $effective_id->id && $effective_id->Content && $effective_id->Content != $oid ) {
@@ -199,21 +196,13 @@ sub MergeInto {
         $merge->Load($user);
         return (0, "Could not load user '$user'") unless $merge->id;
     }
+    return (0, "Could not load user to be merged") unless $merge->id;
 
     # Get copies of the canonicalized users
     my $email;
-    if (defined $merge->Attributes->Named('EffectiveId')) {
-        $email = $merge->CanonicalizeEmailAddress($merge->EmailAddress);
-        $merge->LoadByEmail($email);
-    }
-    return (0, "Could not load user to be merged") unless $merge->id;
 
     my $canonical_self = RT::User->new($RT::SystemUser);
     $canonical_self->Load($self->id);
-    if (defined $canonical_self->Attributes->Named('EffectiveId')) {
-        $email = $canonical_self->CanonicalizeEmailAddress($canonical_self->EmailAddress);
-        $canonical_self->LoadByEmail($email);
-    }
     return (0, "Could not load user to merge into") unless $canonical_self->id;
 
     # No merging into yourself!
@@ -239,13 +228,14 @@ sub MergeInto {
     my $merged_users = $merge->GetMergedUsers;
     $merged_users->SetContent( [$canonical_self->Id, @{$merged_users->Content}] );
 
-    $canonical_self->SetComments( join "\n", grep /\S/,
-        $canonical_self->Comments||'',
-        "Merged into ". ($merge->EmailAddress || $merge->Name)." (". $merge->id .")",
-    );
     $merge->SetComments(join "\n", grep /\S/,
         $merge->Comments||'',
         ($canonical_self->EmailAddress || $canonical_self->Name)." (".$canonical_self->id.") merged into this user",
+    );
+
+    $canonical_self->SetComments( join "\n", grep /\S/,
+        $canonical_self->Comments||'',
+        "Merged into ". ($merge->EmailAddress || $merge->Name)." (". $merge->id .")",
     );
     return (1, "Merged users successfuly");
 }
@@ -343,8 +333,23 @@ sub Next {
     return $self->Next() if ($self->{seen_users}->{$user->id}++);
 
     return $user;
-
 }
+
+sub GotoFirstItem {
+    my $self = shift;
+    $self->{seen_users} = undef;
+    $self->GotoItem(0);
+}
+
+sub _RecordCount {
+    my $self = shift;
+    return 0 unless defined $self->{'items'};
+
+    my %seen;
+    $seen{$_->id}++ for @{ $self->{'items'} };
+    return scalar keys %seen;
+}
+
 
 =head1 AUTHOR
 
