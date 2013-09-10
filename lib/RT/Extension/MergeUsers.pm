@@ -49,7 +49,7 @@ use warnings; no warnings qw(redefine);
 
 package RT::Extension::MergeUsers;
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 =head1 NAME
 
@@ -340,16 +340,6 @@ sub GotoFirstItem {
     $self->{seen_users} = undef;
     $self->GotoItem(0);
 }
-
-sub _RecordCount {
-    my $self = shift;
-    return 0 unless defined $self->{'items'};
-
-    my %seen;
-    $seen{$_->id}++ for @{ $self->{'items'} };
-    return scalar keys %seen;
-}
-
 
 =head1 AUTHOR
 
