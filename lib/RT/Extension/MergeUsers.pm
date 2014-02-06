@@ -49,7 +49,7 @@ use warnings; no warnings qw(redefine);
 
 package RT::Extension::MergeUsers;
 
-our $VERSION = '0.12_01';
+our $VERSION = '0.12_02';
 
 =head1 NAME
 
@@ -124,7 +124,7 @@ sub CanonicalizeEmailAddress {
     }
 
     # get the user whose email address this is
-    my $canonical_user = RT::User->new( $self->CurrentUser );
+    my $canonical_user = RT::User->new( $RT::SystemUser );
     $canonical_user->LoadByCols( EmailAddress => $address );
     return $address unless $canonical_user->id;
     return $address unless $canonical_user->EmailAddress ne $address;
