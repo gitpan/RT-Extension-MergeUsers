@@ -1,0 +1,51 @@
+This file contains message digests of all files listed in MANIFEST,
+signed via the Module::Signature module, version 0.69.
+
+To verify the content in this distribution, first make sure you have
+Module::Signature installed, then type:
+
+    % cpansign -v
+
+It will check each file's integrity, as well as the signature's
+validity.  If "==> Signature verified OK! <==" is not displayed,
+the distribution may already have been compromised, and you should
+not run its Makefile.PL or Build.PL.
+
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA1
+
+SHA1 0530c5f4b3021f8837b017a07533daae748a0aec Changes
+SHA1 7e4dbe225eb2cb3fd618a2384cb7fd924d6ac54d MANIFEST
+SHA1 e70efbd7b887169cc9da0bdcd6a170cdbd874eed MANIFEST.SKIP
+SHA1 34596043aa4db01decc4b8863415b99662f3b676 META.yml
+SHA1 826751a5676ce06f6f82a05d24c9b7a6eedb0c81 Makefile.PL
+SHA1 8239d7acac9c40d57f381b6ac3059e41e509d9dc README
+SHA1 d084c0e2d1872fcd1a6616dbd67b34c0428068fc bin/rt-merge-users.in
+SHA1 e18bb5d883e7a2aa2db4323991142565f468b180 bin/rt-update-merged-users.in
+SHA1 94656e1f12deb29105966e61d830d7178f52bb56 html/Callbacks/RT-Extension-MergeUsers/Admin/Users/Modify.html/RightColumnBottom
+SHA1 c19bf8daf2d0dbb2823a7fd606e6ebf4022f8511 html/Callbacks/RT-Extension-MergeUsers/User/Elements/TicketList/ModifyWatcherSQL
+SHA1 06c410f05488c1612ed66b06d3a86b2580581e4a inc/Module/AutoInstall.pm
+SHA1 8a924add836b60fb23b25c8506d45945e02f42f4 inc/Module/Install.pm
+SHA1 61ab1dd37e33ddbe155907ce51df8a3e56ac8bbf inc/Module/Install/AutoInstall.pm
+SHA1 2d0fad3bf255f8c1e7e1e34eafccc4f595603ddc inc/Module/Install/Base.pm
+SHA1 f0e01fff7d73cd145fbf22331579918d4628ddb0 inc/Module/Install/Can.pm
+SHA1 7328966e4fda0c8451a6d3850704da0b84ac1540 inc/Module/Install/Fetch.pm
+SHA1 66d3d335a03492583a3be121a7d888f63f08412c inc/Module/Install/Include.pm
+SHA1 b62ca5e2d58fa66766ccf4d64574f9e1a2250b34 inc/Module/Install/Makefile.pm
+SHA1 1aa925be410bb3bfcd84a16985921f66073cc1d2 inc/Module/Install/Metadata.pm
+SHA1 70225008dabe40f02a0f4ba3ae68fbd718bc8aa9 inc/Module/Install/RTx.pm
+SHA1 79f5b4199f622e8b05aac266b0c39f6a85bb303f inc/Module/Install/ReadmeFromPod.pm
+SHA1 13c903897bad7f0fdd7871a4a0182ff62dfbefd5 inc/Module/Install/Substitute.pm
+SHA1 e4196994fa75e98bdfa2be0bdeeffef66de88171 inc/Module/Install/Win32.pm
+SHA1 c3a6d0d5b84feb3280622e9599e86247d58b0d18 inc/Module/Install/WriteAll.pm
+SHA1 a1a04d81d86a6ff4e470f1841d17763d44264b20 lib/RT/Extension/MergeUsers.pm
+SHA1 05175f6d031f2353e9612f29e23e88c723835026 xt/01merge_users.t
+SHA1 03cf94d0e3673357c4dc46076fda695bb2963a87 xt/change_email.t
+SHA1 72e8648cedf41a57dec6647ef8d6c1b4b4a97e2e xt/collection.t
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.11 (GNU/Linux)
+
+iEYEARECAAYFAlM0WBMACgkQMflWJZZAbqBDjgCgoaEKh2UIyxgVmHSYtxV0kH4M
+N5kAn1mHkTDtRjDUxgX56dLDAcj2km05
+=dLux
+-----END PGP SIGNATURE-----
