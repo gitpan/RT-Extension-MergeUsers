@@ -1,10 +1,10 @@
 use inc::Module::Install;
 
-RTx('RT-Extension-MergeUsers');
-all_from       ('lib/RT/Extension/MergeUsers.pm');
-readme_from    ('lib/RT/Extension/MergeUsers.pm');
+RTx 'RT-Extension-MergeUsers';
+readme_from 'lib/RT/Extension/MergeUsers.pm';
 
-requires_rt('3.8.3');
+requires_rt('4.0.0');
+rt_too_new('4.4.0');
 
 my ($lib_path) = $INC{'RT.pm'} =~ /^(.*)[\\\/]/;
 my $local_lib_path = "$RT::LocalPath/lib";
@@ -24,8 +24,10 @@ substitute( {
     { sufix => '.in' },
     'bin/rt-update-merged-users',
     'bin/rt-merge-users',
+    'bin/rt-clean-merged-users',
 );
 
+no_index( package => 'RT::User', 'RT::Users', 'RT::Principal');
+
 sign();
-auto_install();
 WriteAll();

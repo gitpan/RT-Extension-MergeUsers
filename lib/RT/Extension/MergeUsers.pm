@@ -2,7 +2,7 @@
 #
 # COPYRIGHT:
 #
-# This software is Copyright (c) 1996-2008 Best Practical Solutions, LLC
+# This software is Copyright (c) 1996-2014 Best Practical Solutions, LLC
 #                                          <sales@bestpractical.com>
 #
 # (Except where explicitly superseded by other copyright notices)
@@ -22,7 +22,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+# 02110-1301 or visit their web page on the internet at
+# http://www.gnu.org/licenses/old-licenses/gpl-2.0.html.
 #
 #
 # CONTRIBUTION SUBMISSION POLICY:
@@ -43,13 +45,17 @@
 # those contributions and any derivatives thereof.
 #
 # END BPS TAGGED BLOCK }}}
+
 use 5.008003;
 use strict;
 use warnings; no warnings qw(redefine);
 
+# Explicitly load Shredder here so we can override RT::User::BeforeWipeout
+use RT::Shredder;
+
 package RT::Extension::MergeUsers;
 
-our $VERSION = '0.12';
+our $VERSION = '1.00';
 
 =head1 NAME
 
@@ -68,32 +74,88 @@ It also provides a version of L<CanonicalizeEmailAddress>, which means that
 all e-mail sent from secondary users is displayed as coming from the primary
 user.
 
+=head2 RT::Shredder and Merged Users
+
+Merging a user effectively makes it impossible to load the merged user
+directly. Attempting to access the old user resolves to the merged-into user.
+Because of this, MergeUsers has some extra code to help L<RT::Shredder>
+clean up these merged records to avoid leaving merged user records in the DB
+while removing the user they were merged into.
+
+When running L<RT::Shredder> on a user record with other users merged into it,
+the merged users are Unmerged before the initial user record is shredded.
+There are two options to handle these newly unmerged users:
+
+=over
+
+=item 1.
+
+Re-run your shredder command with the same or similar options. The unmerged
+user records will now be accessible and, depending on your shredder options,
+they will likely be shredded on the second run. If you have multiple
+layers of merged users, you may need to run shredder multiple times.
+
+=item 2.
+
+MergeUsers will log the unmerged users at the C<info> level so you can pull
+the user ids from the log and shred them manually. This is most likely to
+be useful if you are shredding one specific user (and all merged accounts).
+
+=back
+
 =head1 INSTALLATION
 
-If you're upgrading then, as well, read L</UPGRADING> below.
+Be sure to also read L</UPGRADING> if you are upgrading.
 
-    perl Makefile.PL
-    make
-    make install
-    clear your mason cache
-        most often this would be rm -rf /opt/rt3/var/mason_data/*
-    restart apache
+=over
 
-For RT 3.8
+=item C<perl Makefile.PL>
 
-    Add RT::Extension::MergeUsers to your /opt/rt3/etc/RT_SiteConfig.pm file
+=item C<make>
+
+=item C<make install>
+
+May need root permissions
+
+=item Edit your F</opt/rt4/etc/RT_SiteConfig.pm>
+
+If you are using RT 4.2 or greater, add this line:
+
+    Plugin('RT::Extension::MergeUsers');
+
+For RT 4.0, add this line:
+
     Set(@Plugins, qw(RT::Extension::MergeUsers));
 
-    If you have more than one Plugin enabled, you must enable them as one
-    Set(@Plugins, qw(Foo Bar)); command
+or add C<RT::Extension::MergeUsers> to your existing C<@Plugins> line.
+
+=item Clear your mason cache
+
+    rm -rf /opt/rt4/var/mason_data/obj
+
+=item Restart your webserver
+
+=back
 
 =head1 UPGRADING
 
-If you are upgrading from 0.03_01 or earlier, you must run F<rt-upgrade-merged-users>.
-This script will create MergedUsers Attributes so RT can know when you're looking
-at a user that other users have been merged into. If you don't run this script,
-you'll have issues unmerging users. It can be safely run multiple times, it will
-only create Attributes as needed.
+If you are upgrading from 0.03_01 or earlier, you must run
+F<rt-upgrade-merged-users>.  This script will create MergedUsers
+Attributes so RT can know when you're looking at a user that other users
+have been merged into. If you don't run this script, you'll have issues
+unmerging users. It can be safely run multiple times, it will only
+create Attributes as needed.
+
+=head1 UTILITIES
+
+=head2 rt-clean-merged-users
+
+When a user with another user merged into it is shredded,
+the attributes on that user are also shredded, but the
+merged user will remain, along with attributes that may point
+to the now missing user id. This script cleans up attributes
+if the merged-into user record is now gone. These users will then be
+converted back to regular unmerged users.
 
 =cut
 
@@ -147,7 +209,8 @@ sub LoadByCols {
         );
         if ( $effective_id->id && $effective_id->Content && $effective_id->Content != $oid ) {
             $self->LoadByCols( id => $effective_id->Content );
-            $EFFECTIVE_ID_CACHE{ $oid } = $self->id;
+            $EFFECTIVE_ID_CACHE{ $oid } = $self->id
+                if $self->Id;
         } else {
             $EFFECTIVE_ID_CACHE{ $oid } = undef;
         }
@@ -156,6 +219,13 @@ sub LoadByCols {
         $self->LoadByCols( id => $EFFECTIVE_ID_CACHE{ $oid } );
     }
 
+    if ( not $self->Id ){
+        # Unable to load the effective user, so return actual user
+        RT::Logger->warning("Unable to load user by effective id. "
+            . "You may need to run rt-clean-merged-users if some users have been "
+            . "deleted or shredded.");
+        $self->SUPER::LoadByCols( Id => $oid );
+    }
     return $self->id;
 }
 
@@ -306,6 +376,28 @@ sub NameAndEmail {
     }
 }
 
+{
+    my $orig = RT::User->can('BeforeWipeout');
+    *RT::User::BeforeWipeout = sub {
+        my $self = shift;
+
+        # Check to see if this user has any other users merged into it
+        # Unmerge any merged users to break the connection to this
+        # soon-to-be-shredded user.
+        # The MergedUsers attribute on this user will be removed by Shredder.
+
+        my $merged_users = $self->GetMergedUsers;
+        foreach my $user_id ( @{$merged_users->Content} ){
+            my $merged_user = RT::User->new(RT->SystemUser);
+            $merged_user->LoadOriginal( id => $user_id );
+            my ($id, $result) = $merged_user->UnMerge();
+            RT::Logger->info($result);
+        }
+
+        return $orig->($self, @_);
+    };
+}
+
 package RT::Users;
 use RT::Users;
 
@@ -327,10 +419,16 @@ sub Next {
 
 
     my ($effective_id) = $user->Attributes->Named("EffectiveId");
+    my $original_id = $user->Id;
     if ($effective_id && $effective_id->Content && $effective_id->Content != $user->id) {
         $user->LoadByCols(id =>$effective_id->Content);
     }
-    return $self->Next() if ($self->{seen_users}->{$user->id}++);
+    return $self->Next() if ($user->Id and $self->{seen_users}->{$user->id}++);
+
+    # Failed to load the effective user record for some reason, so expose
+    # this user again.
+    $user->LoadByCols( Id => $original_id )
+        unless $user->Id;
 
     return $user;
 }
