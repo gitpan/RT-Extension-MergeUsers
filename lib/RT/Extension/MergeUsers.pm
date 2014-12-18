@@ -55,7 +55,7 @@ use RT::Shredder;
 
 package RT::Extension::MergeUsers;
 
-our $VERSION = '1.01';
+our $VERSION = '1.02';
 
 =head1 NAME
 
@@ -73,35 +73,6 @@ which allow you to programmatically accomplish the same thing from your code.
 It also provides a version of L<CanonicalizeEmailAddress>, which means that
 all e-mail sent from secondary users is displayed as coming from the primary
 user.
-
-=head2 RT::Shredder and Merged Users
-
-Merging a user effectively makes it impossible to load the merged user
-directly. Attempting to access the old user resolves to the merged-into user.
-Because of this, MergeUsers has some extra code to help L<RT::Shredder>
-clean up these merged records to avoid leaving merged user records in the DB
-while removing the user they were merged into.
-
-When running L<RT::Shredder> on a user record with other users merged into it,
-the merged users are Unmerged before the initial user record is shredded.
-There are two options to handle these newly unmerged users:
-
-=over
-
-=item 1.
-
-Re-run your shredder command with the same or similar options. The unmerged
-user records will now be accessible and, depending on your shredder options,
-they will likely be shredded on the second run. If you have multiple
-layers of merged users, you may need to run shredder multiple times.
-
-=item 2.
-
-MergeUsers will log the unmerged users at the C<info> level so you can pull
-the user ids from the log and shred them manually. This is most likely to
-be useful if you are shredding one specific user (and all merged accounts).
-
-=back
 
 =head1 INSTALLATION
 
@@ -156,6 +127,41 @@ merged user will remain, along with attributes that may point
 to the now missing user id. This script cleans up attributes
 if the merged-into user record is now gone. These users will then be
 converted back to regular unmerged users.
+
+=head2 rt-merge-users
+
+A command-line tool to merge one user into another
+
+=head1 CAVEATS
+
+=head2 RT::Shredder and Merged Users
+
+Merging a user effectively makes it impossible to load the merged user
+directly. Attempting to access the old user resolves to the merged-into user.
+Because of this, MergeUsers has some extra code to help L<RT::Shredder>
+clean up these merged records to avoid leaving merged user records in the DB
+while removing the user they were merged into.
+
+When running L<RT::Shredder> on a user record with other users merged into it,
+the merged users are Unmerged before the initial user record is shredded.
+There are two options to handle these newly unmerged users:
+
+=over
+
+=item 1.
+
+Re-run your shredder command with the same or similar options. The unmerged
+user records will now be accessible and, depending on your shredder options,
+they will likely be shredded on the second run. If you have multiple
+layers of merged users, you may need to run shredder multiple times.
+
+=item 2.
+
+MergeUsers will log the unmerged users at the C<info> level so you can pull
+the user ids from the log and shred them manually. This is most likely to
+be useful if you are shredding one specific user (and all merged accounts).
+
+=back
 
 =cut
 
@@ -401,12 +407,6 @@ sub NameAndEmail {
 package RT::Users;
 use RT::Users;
 
-=head2 Next
-
-This custom iterator makes sure that duplicate users are never shown in search results.
-
-=cut
-
 sub Next {
     my $self = shift;
 
@@ -460,14 +460,27 @@ sub SetDisabled {
     return ($ret, $msg);
 }
 
-
 =head1 AUTHOR
 
-Alex Vandiver E<lt>alexmv@bestpractical.comE<gt>
+Best Practical Solutions, LLC E<lt>modules@bestpractical.comE<gt>
 
-=head1 LICENSE
+=head1 BUGS
 
-GPL version 2.
+All bugs should be reported via email to
+
+    L<bug-RT-Extension-MergeUsers@rt.cpan.org|mailto:bug-RT-Extension-MergeUsers@rt.cpan.org>
+
+or via the web at
+
+    L<rt.cpan.org|http://rt.cpan.org/Public/Dist/Display.html?Name=RT-Extension-MergeUsers>.
+
+=head1 LICENSE AND COPYRIGHT
+
+This software is Copyright (c) 2014 by Best Practical Solutions
+
+This is free software, licensed under:
+
+  The GNU General Public License, Version 2, June 1991
 
 =cut
 

@@ -17,9 +17,9 @@ Hash: SHA1
 SHA1 12683fcd792174d889cb5ceae92212fc406743c1 Changes
 SHA1 01dfd58e8b812482ebaa78769d188cd194e3f73b MANIFEST
 SHA1 e70efbd7b887169cc9da0bdcd6a170cdbd874eed MANIFEST.SKIP
-SHA1 f625382fda8c3219e684dc78ed20230268a5539d META.yml
-SHA1 b3f285ff96661d51f45288f411cc864bd91df96c Makefile.PL
-SHA1 a1c617362a00b809e7f77445014a66c69b1236fc README
+SHA1 0fe8a2620193613b0f010fe01914103b53c5ade2 META.yml
+SHA1 c77ea9f6bdae3b040e13dd0e3d3fd3b00ae26bdd Makefile.PL
+SHA1 9fae6206d0aafa8cfdcdc4eb4f8c9b8e62bc9aef README
 SHA1 4cd7616ac96344faa44b8a2cdbedba86ac238938 bin/rt-clean-merged-users
 SHA1 856f477251ca589466bf491199ed2e3ff6a9d9c1 bin/rt-clean-merged-users.in
 SHA1 d084c0e2d1872fcd1a6616dbd67b34c0428068fc bin/rt-merge-users.in
@@ -41,14 +41,14 @@ SHA1 f8b2ae3386f6ba26c33408968a953d450842eade inc/Module/Install/Win32.pm
 SHA1 f302bc703d76299cff243e5b44cecd61aac27b76 inc/Module/Install/WriteAll.pm
 SHA1 4e09b598c2626e08cec2bed5e981492fa9e90967 inc/YAML/Tiny.pm
 SHA1 034d0f3a7401dae4be3eee279258181f51a4ad81 inc/unicore/Name.pm
-SHA1 a708cb1eb94262604454efb21d2212eaf98e3939 lib/RT/Extension/MergeUsers.pm
+SHA1 d518c90e742ecea00d4f4ff35c9d1f664712bd7c lib/RT/Extension/MergeUsers.pm
 SHA1 05175f6d031f2353e9612f29e23e88c723835026 xt/01merge_users.t
 SHA1 03cf94d0e3673357c4dc46076fda695bb2963a87 xt/change_email.t
 SHA1 72e8648cedf41a57dec6647ef8d6c1b4b4a97e2e xt/collection.t
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v1
 
-iEYEARECAAYFAlR8jPIACgkQMflWJZZAbqDx/QCglp0SZ1LfuvS8wnBV1AhCHN/z
-8BYAnjhnJN8iHwefrNoEK62A/xB9o6v6
-=sLhp
+iEYEARECAAYFAlSTS2cACgkQMflWJZZAbqBE5wCfewRzm1x7Tj2Gb9l5/+Nv4+Av
+OSMAoK+SQ9vfEjKUSaktd4VpkgyclGnc
+=K8lN
 -----END PGP SIGNATURE-----
